@@ -1,0 +1,127 @@
+---
+title: "Lecture 9: Computation with Random Variables"
+output: 
+  learnr::tutorial:
+    css: css/styles.css
+runtime: shiny_prerendered
+---
+
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(ggplot2)
+library(kableExtra)
+```
+
+
+## Computation with Normal Random Variables
+
+
+For the following exercises, we use $X_1$, $X_2$, $X_3$, ..., $X_{25}$, where
+
+$$X_i\sim N(0,1)$$
+
+for all $i$ and they are independent.
+
+
+### Simulating from a Single $X_1$
+
+1. Simulate 100 samples of $X_1$ and 
+    1)  plot their histogram;
+    2)  compute their mean; and
+    3)  compute their variance.
+
+```{r ex1, exercise=TRUE, exercise.lines=5}
+n <- 100
+```
+
+2. Simulate 100 samples of $3X_1 + 2$ and
+    1)  plot their histogram;
+    2)  compute their mean; and
+    3)  compute their variance.
+
+How do they compare to the results from Part 1.?
+
+```{r ex2, exercise=TRUE, exercise.lines=5}
+n <- 100
+```
+
+3. Simulate 100 samples of $\overline{X}$, where
+
+$$\overline{X}=\frac{\sum_{i=1}^{25}}{25}$$
+
+and 
+    1)  plot their histogram;
+    2)  compute their mean; and
+    3)  compute their variance.
+
+How do they compare to the results from Part 1.?
+
+```{r ex3, exercise=TRUE, exercise.lines=10}
+n <- 100
+```
+
+## Tutorial Activity 5 - Q2 (15 points)
+
+_Complete the activity below print the page to PDF from a browser (e.g., Chrome) to submit the result on Quercus discussion board. The final version of the submission will be used for grading._
+
+Let $X$ and $Y$ have joint distribution function $f$,
+
+$$f(x,y)=\begin{cases}
+\frac{1}{30}xy + \frac{x}{y^2} & \text{for } 1\le y \le 4, 1/2 \le x \le 3/2 \\
+0 & \text{otherwise.}
+\end{cases}$$
+
+### a. (4 points) Simulate 10,000 samples of $X$ and $Y$ to compute $E(X)$, $E(Y)$, $\text{Var}(X)$, and $\text{Var}(Y)$.
+
+```{r tut2a, exercise=TRUE, exercise.lines=20}
+n <-10000; set.seed(<seed>) # provide your own seed here.
+```
+
+Type your answers below.
+
+```{r echo=FALSE}
+shiny::inputPanel(
+shiny::textInput('q2a1',  'E[X]'),
+shiny::textInput('q2a2',  'E[Y]'),
+shiny::textInput('q2a3',  'Var[X]'),
+shiny::textInput('q2a4',  'Var[Y]')
+)
+```
+
+### b. (4 points) Simulate 10,000 samples of $Z=X+Y$ to compute $E(Z)$ and $\text{Var}(Z)$. (_Do not use `var()` function in R._)
+
+```{r tut2b, exercise=TRUE, exercise.lines=20}
+n <-10000; set.seed(<seed>) # provide your own seed here.
+```
+
+Type your answers below.
+
+```{r echo=FALSE}
+shiny::inputPanel(
+  shiny::textInput('q2b1', 'E[Z]'),
+  shiny::textInput('q2b2', 'Var[Z]')
+)
+```
+
+### c. (7 points) Simulate 10,000 samples of $W$ to compute $E\left(W\right)$ and $\text{Var}\left(W\right)$ where
+
+$$W=\sum_{i=1}^{100} \frac{X_i+Y_i}{100}.$$
+
+Compare $E\left(W\right)$ and $\text{Var}\left(W\right)$ with $E(Z)$ and $\text{Var}(Z)$ from part b. Explain their relationships.
+
+```{r tut2c, exercise=TRUE, exercise.lines=25}
+n <-10000; set.seed(<seed>) # provide your own seed here.
+```
+
+Type your answers below.
+
+```{r echo=FALSE}
+shiny::inputPanel(
+  shiny::div(
+    shiny::textInput('q2c1', 'E[W]'),
+    shiny::textInput('q2c2', 'Var[W]')),
+  shiny::div(shiny::textAreaInput('q2c3', 'Compare to Part b'))
+)
+```
