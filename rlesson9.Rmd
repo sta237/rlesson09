@@ -86,7 +86,7 @@ N <- 100
 
 3. Simulate 100 samples of $\overline{X}$, where
 
-$$\overline{X}=\frac{\sum_{i=1}^{25}}{25}$$
+$$\overline{X}=\frac{\sum_{i=1}^{25}X_i}{25}$$
 
 and 
     1)  plot their histogram;
