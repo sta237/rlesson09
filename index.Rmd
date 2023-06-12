@@ -1,0 +1,368 @@
+---
+title: "Lecture 9: Computation with Random Variables"
+output: 
+  learnr::tutorial:
+    css: css/styles.css
+runtime: shiny_prerendered
+---
+
+
+```{r setup, include=FALSE}
+library(learnr)
+library(tidyverse)
+library(ggplot2)
+library(kableExtra)
+```
+
+
+## R preparation
+
+### Defining custom functions
+
+In R, you can define your own function to perform a set of tasks. You can
+define the set of inputs (_arguments_) and its output (_return value_). After defining
+your own function, you can call function to peform the specified set of
+tasks repeatedly.
+
+```{r eval=FALSE}
+my_function <- function(arg1, arg2, arg3 = < default value >) {
+  < define task(s) >
+  return(< output value >)
+}
+```
+
++  `my_function <- function()` assigns the defined function to variable `my_function`. 
+You can name a function just like any variable - start with a letter and can be
+a combination of letters, digits, period (`.`), and underscore (`_`) without any spaces.  
+I suggest following a well-established convention such
+as [snake_case](https://en.wikipedia.org/wiki/Snake_case) in a consistent manner
+and giving a brief but descriptive name.
+
++  `function(arg1, arg1, arg3 = < default value >)` describes the set of input
+arguments the function takes. Arguments without "=" assignments are mandatory
+input arguments and users are expected to provide values for all of them.
+Arguments defined with "=" assignments are optional input arguments that will
+take the assigned value as the default value if the user doesn't provide any
+value for the arguments. Optional arguments must be defined after the mandatory
+arguments.
+
++  `return(< output value>)` defines the return value of the function. When you
+call the function, it returns the value inside `return()` or if there is no
+explicit `return()`, the result of the last statement. While you can define
+the return value without explicitly calling `return()`, it can make the function
+easier to read and understand.
+
+For example, I can define a function that prints and returns the information
+provided as input arguments.
+
+```{r echo=TRUE}
+record_info <- function(name, sex, is_student = TRUE) {
+  print(paste(name, "is a", sex, 
+              ifelse(is_student, "student.", "and not a student.")))
+  record <- data.frame(
+    name = name, sex = sex, is_student = is_student
+  )
+  return(record)
+}
+```
+
+```{r record-setup}
+record_info <- function(name, sex, is_student = TRUE) {
+  print(paste(name, "is a", sex, 
+              ifelse(is_student, "student.", "and not a student.")))
+  record <- data.frame(
+    name = name, sex = sex, is_student = is_student
+  )
+  return(record)
+}
+```
+
+The function `record_info()` is available in the code chunk below. Test the function
+with your information.
+
+```{r record, exercise=TRUE}
+record_info("Michael", "male", FALSE)
+```
+
+
+## Blackjack against a dealer
+
+The game of Blackjack is a game played with one more decks of playing cards.
+Below is a single deck of playing cards.
+
+```{r echo=TRUE}
+suits <- c("Spades", "Hearts", "Clubs", "Diamonds")
+numbers <- c("A", 2:10, "J", "Q", "K")
+values <- c(11, 2:10, 10, 10, 10)
+deck <- data.frame(
+  suit = rep(suits, each = 13),
+  number = rep(numbers, 4),
+  value = rep(values, 4)
+)
+deck
+```
+
+In a game of Blackjack, one ore more players play against a dealer. Scores for the player
+and the dealer are counted using the rule described below.
+
+_Counting rule:_
+
++  Scores are based on the `number`s.
++  Numbers between `2` and `10` are always counted as is.
++  Count the face cards where the `number` is `J`, `Q`, or `K` as $10$.
++  Count $A$s on hand as $11$ unless the total score exceeds $21$.
+    a.  When the total score exceeds $21$ and there is an $A$ on hand counted as $11$, count the $A$ as $1$.
+    b.  Repeat the above step until the total score is less than or equal to $21$ or there are no more $A$ counted as $11$ on hand.
+
+
+_Winning objective:_
+
++  The objective of the game is to score higher than the dealer without exceeding $21$.
+    a. When a player scores $21$ with their first pair, the player wins immediately.
+    b. When a player exceeds $21$ after counting all $A$s on hand as $1$, the player loses immediately.
++  For simplicity, we will consider all tied scores a win for the player even when the dealer scores $21$ with their first pair.
+
+_Game play:_
+
++  The game starts with each player and the dealer getting 2 pairs of cards
+drawn without replacements from a randomly shuffled deck(s) of playing cards.
+The cards of each player is revealed to everyone while only one of the dealer's
+card is revealed to the players.
+
+```{r echo=FALSE}
+set.seed(237)
+shuffled <- sample(seq_len(52))
+player <- 1:2
+dealer <- 3:4
+blackjack_table <- ggplot() +
+  theme_void() +
+  scale_x_continuous(limits = c(0, 3)) +
+  scale_y_reverse(limits = c(8, -.5)) +
+  annotate("rect", xmin = 0, xmax = 3, ymin = 8, ymax = -.5, fill = NA, color = "darkgrey") +
+  annotate("text", x = 1:2, y = 0, label = c("Player", "Dealer"), size = 5, vjust = 1, hjust = .5) +
+  annotate("segment", x = 1.5, xend = 1.5, y = 8, yend = -.5, linetype = "dotted")
+blackjack_table +
+  annotate("text", x = 1, y = player, 
+           label = paste(deck$number[shuffled[player]], deck$suit[shuffled[player]]),
+           color = ifelse(deck$suit[shuffled[player]] %in% c("Hearts", "Diamonds"), "red", "black")) +
+  annotate("text", x = 2, y = dealer, 
+           label = c(paste(deck$number[shuffled[dealer[1]]], deck$suit[shuffled[dealer[1]]]), "?"),
+           color = c(ifelse(deck$suit[shuffled[dealer[1]]] %in% c("Hearts", "Diamonds"), "red", "black"), "black"))
+```
+
+
++  Each player then decides whether to receive more cards one at a time. For example, the player may decide to draw one more card and then another.
+
+```{r echo=FALSE}
+player <- c(1:2, 5:6)
+dealer <- 3:4
+blackjack_table +
+  annotate("text", x = 1, y = player, 
+           label = paste(deck$number[shuffled[player]], deck$suit[shuffled[player]]),
+           color = ifelse(deck$suit[shuffled[player]] %in% c("Hearts", "Diamonds"), "red", "black")) +
+  annotate("text", x = 2, y = dealer, 
+           label = c(paste(deck$number[shuffled[dealer[1]]], deck$suit[shuffled[dealer[1]]]), "?"),
+           color = c(ifelse(deck$suit[shuffled[dealer[1]]] %in% c("Hearts", "Diamonds"), "red", "black"), "black"))
+```
+
++  The player stops and scores $8+2+3+1=14$. If there is another player, the player makes their decisions. When all players finish making their decisions, the dealer reveals their second card.
+
+
+```{r echo=FALSE}
+player <- c(1:2, 5:6)
+dealer <- 3:4
+blackjack_table +
+  annotate("text", x = 1, y = player, 
+           label = paste(deck$number[shuffled[player]], deck$suit[shuffled[player]]),
+           color = ifelse(deck$suit[shuffled[player]] %in% c("Hearts", "Diamonds"), "red", "black")) +
+  annotate("text", x = 2, y = dealer, 
+           label = paste(deck$number[shuffled[dealer]], deck$suit[shuffled[dealer]]),
+           color = ifelse(deck$suit[shuffled[dealer]] %in% c("Hearts", "Diamonds"), "red", "black"))
+```
+
++  The dealer draws cards until they score $17$ or higher.
+
+```{r echo=FALSE}
+player <- c(1:2, 5:6)
+dealer <- c(3:4, 7)
+blackjack_table +
+  annotate("text", x = 1, y = player, 
+           label = paste(deck$number[shuffled[player]], deck$suit[shuffled[player]]),
+           color = ifelse(deck$suit[shuffled[player]] %in% c("Hearts", "Diamonds"), "red", "black")) +
+  annotate("text", x = 2, y = dealer, 
+           label = paste(deck$number[shuffled[dealer]], deck$suit[shuffled[dealer]]),
+           color = ifelse(deck$suit[shuffled[dealer]] %in% c("Hearts", "Diamonds"), "red", "black"))
+```
+
++  If the dealer's score exceeds $21$, all players win. In this example, the dealer scores $3+4+10=17$ which does not exceed $21$ and is higher than the player's score of $14$. The player loses.
+
+
+### Defining the scoring function
+
+The function `score_blackjack()` takes a subset of the `deck` data frame as
+an input to score the hand.
+
+```{r}
+score_blackjack <- function(cards) {
+  s <- sum(cards$value)
+  n_aces <- sum(cards$value == 11)
+  s <- s - 10 * min(ceiling((s - 21) / 10), n_aces)
+  return(s)
+}
+```
+
+
+### Defining the dealer
+
+Since we know the rules for the dealer, we can implement how the dealer
+decides to draw more cards. Write the function such that it returns `TRUE` 
+if the decision is to draw one more card given the `cards` on the dealer's 
+hand and `FALSE` otherwise.
+
+Use `score_blackjack()` to write the function and data frame `deck` to test it. 
+They are available in the code chunk below.
+
+```{r define-dealer-setup}
+suits <- c("Spades", "Hearts", "Clubs", "Diamonds")
+numbers <- c("A", 2:10, "J", "Q", "K")
+values <- c(11, 2:10, 10, 10, 10)
+deck <- data.frame(
+  suit = rep(suits, each = 13),
+  number = rep(numbers, 4),
+  value = rep(values, 4)
+)
+score_blackjack <- function(cards) {
+  s <- sum(cards$value)
+  n_aces <- sum(cards$value == 11)
+  s <- s - 10 * min(ceiling((s - 21) / 10), n_aces)
+  return(s)
+}
+```
+
+```{r define-dealer, exercise=TRUE, exercise.lines=10}
+dealer <- function(cards) {
+  
+}
+```
+
+```{r define-dealer-solution}
+dealer <- function(cards) {
+  decision <- score_blackjack(cards) < 17
+  return(decision)
+}
+```
+
+
+### Playing a game of Blackjack
+
+In the code chunk below, the functions `score_blackjack()`, `dealer()`, 
+`winner()`, and `player()` as well as the data frame `deck` are available. 
+
+The function `winner()` takes the player's current score and the dealer's current
+score as the input arguments and returns `TRUE` if the player wins and `FALSE` 
+otherwise. The function `player()` expects the player's current hand as a subset
+of `deck` and returns `TRUE` if the current hand's score is less than 20.
+
+Let's write a game of Blackjack using the functions and indicate
+whether the player won.
+
+```{r play-blackjack-setup}
+suits <- c("Spades", "Hearts", "Clubs", "Diamonds")
+numbers <- c("A", 2:10, "J", "Q", "K")
+values <- c(11, 2:10, 10, 10, 10)
+deck <- data.frame(
+  suit = rep(suits, each = 13),
+  number = rep(numbers, 4),
+  value = rep(values, 4)
+)
+score_blackjack <- function(cards) {
+  s <- sum(cards$value)
+  n_aces <- sum(cards$value == 11)
+  s <- s - 10 * min(ceiling(max(0, (s - 21) / 10)), n_aces)
+  return(s)
+}
+dealer <- function(cards) {
+  decision <- score_blackjack(cards) < 17
+  return(decision)
+}
+player <- function(cards){
+  decision <- score_blackjack(cards) < 20
+  return(decision)
+}
+winner <- function(player_score, dealer_score) {
+  player_won <- TRUE
+  if (dealer_score < 22 && dealer_score > player_score) {
+    player_won <- FALSE
+  }
+  if (player_score > 21) {
+    player_won <- FALSE
+  }
+  return(player_won)
+}
+```
+
+```{r play-blackjack, exercise=TRUE, exercise.lines=15}
+shuffled <- deck[sample(seq_len(nrow(deck))), ]
+player_hand <- #
+dealer_hand <- #
+```
+
+```{r play-blackjack-hint-1}
+shuffled <- deck[sample(seq_len(nrow(deck))), ]
+# deal first pairs
+player_hand <- c(1:2)
+dealer_hand <- c(3:4)
+position <- 5 # track the top of the undealt deck
+while (player(shuffled[player_hand, ])) {
+  player_hand <- c(player_hand, position)
+  position <- position + 1
+}
+# if you are writing a game, you should stop when the player's hand
+# is either exactly 21 or exceeds 21
+while (dealer(shuffled[dealer_hand, ])) {
+  dealer_hand <- c(dealer_hand, position)
+  position <- position + 1
+}
+player_score <- score_blackjack(shuffled[player_hand, ])
+dealer_score <- score_blackjack(shuffled[dealer_hand, ])
+
+shuffled[player_hand, ]
+shuffled[dealer_hand, ]
+                                
+print(paste(
+  ifelse(winner(player_score, dealer_score), "The player won,", "The player lost,"),
+  player_score, "vs.", dealer_score))
+```
+
+```{r play-blackjack-hint-2}
+shuffled <- deck[sample(seq_len(nrow(deck))), ]
+play_a_round <- function(shuffled, position = 1) {
+  # takes shuffled deck and the current position
+  # of the top of the undealt deck as input arguments
+  # deal first pairs
+  player_hand <- c(position, position + 1)
+  dealer_hand <- c(position + 2:3)
+  position <- position + 4
+  while (player(shuffled[player_hand, ])) {
+    player_hand <- c(player_hand, position)
+    position <- position + 1
+  }
+  player_score <- score_blackjack(shuffled[player_hand, ])
+  if (player_score == 21) {
+    return(c(TRUE, position)) # player wins immediately
+  }
+  if (player_score > 21) {
+    return(c(FALSE, position)) # player loses immediately
+  }
+  while (dealer(shuffled[dealer_hand, ])) {
+    dealer_hand <- c(dealer_hand, position)
+    position <- position + 1
+  }
+  dealer_score <- score_blackjack(shuffled[dealer_hand, ])
+  # return c(winner, current position)
+  return(c(winner(player_score, dealer_score), position))
+}
+                                
+print(paste(
+  ifelse(play_a_round(shuffled)[1], "The player won.", "The player lost.")))
+```
